@@ -6,6 +6,8 @@ import {FieldRow, FileField, FormAction} from "./ui-components";
 import {readLocalFile} from "../../utils/file";
 import JsonDataDisplay from "../../components/JsonDataDisplay";
 import {importData} from "../../utils/api";
+import yaml from 'js-yaml';
+import {csvParser} from "../../utils/csvParse";
 
 const ImportForm = ({models}) => {
   const options = map(models, convertModelToOption);
@@ -37,7 +39,22 @@ const ImportForm = ({models}) => {
       return;
     }
     setLoading(true);
-    readLocalFile(sourceFile, JSON.parse).then(setSource)
+    // add yaml and csv parse
+    const filenameSplit = sourceFile.name.split('.');
+    const ext = filenameSplit[filenameSplit.length - 1];
+    let parser;
+    switch (ext) {
+      case 'csv':
+        parser = csvParser;
+        break;
+      case 'yml':
+      case 'yaml':
+        parser = yaml.safeLoad;
+        break;
+      default:
+        parser = JSON.parse;
+    }
+    readLocalFile(sourceFile, parser).then(setSource)
     .catch((error) => {
       strapi.notification.error(
         "Something wrong when uploading the file, please check the file and try again.");
@@ -77,7 +94,7 @@ const ImportForm = ({models}) => {
       <FileField>
         <input id="source"
                name="source"
-               accept={".json"}
+               accept={".json,.yaml,.yml,.csv"}
                type="file"
                onChange={onSourceFileChange}
         />
