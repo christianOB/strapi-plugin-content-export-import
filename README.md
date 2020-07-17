@@ -32,7 +32,7 @@ Running at http://localhost:8000/
 
 ## Features
 
-- Support JSON export & import
+- Support JSON export & JSON, CSV and YAML import
 - Delete all content of a type
 
 **Not supported**
