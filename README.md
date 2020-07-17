@@ -13,7 +13,7 @@ cd /<path-to-your-strapi-project
 cd plugins
 
 # clone the plugin code into a folder and skip the prefix
-git clone git@github.com:lazurey/strapi-plugin-content-export-import.git content-export-import
+git clone git@github.com:christianOB/strapi-plugin-content-export-import.git content-export-import
 # install dependencies
 cd content-export-import && yarn install
 # build the plugin
