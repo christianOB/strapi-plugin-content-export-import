@@ -13,9 +13,10 @@ module.exports = {
   importData: async (ctx) => {
     const { targetModel, source, kind } = ctx.request.body;
     try {
-      if (kind === 'collectionType' && Array.isArray(source)) {
-        for (let i = 0; i < source.length; i++) {
-          await uitls.importItemByContentType(targetModel, source[i])
+      if (kind === 'collectionType') {
+        const sourceArray = (Array.isArray(source)) ? source : [source];
+        for (let i = 0; i < sourceArray.length; i++) {
+          await uitls.importItemByContentType(targetModel, sourceArray[i])
         }
       } else {
         await uitls.importSingleType(targetModel, source);
