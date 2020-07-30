@@ -2,6 +2,7 @@
 
 const uitls  = require('./utils/content');
 const _ = require('lodash');
+const create_util = require('./utils/createObjFromMapping');
 
 /**
  * ContentExportImport.js service
@@ -11,12 +12,13 @@ const _ = require('lodash');
 
 module.exports = {
   importData: async (ctx) => {
-    const { targetModel, source, kind } = ctx.request.body;
+    const { targetModel, source, kind, mapping } = ctx.request.body;
     try {
       if (kind === 'collectionType') {
         const sourceArray = (Array.isArray(source)) ? source : [source];
         for (let i = 0; i < sourceArray.length; i++) {
-          await uitls.importItemByContentType(targetModel, sourceArray[i])
+          const mappedSource = (mapping) ? create_util.createObjFromMappingObj(sourceArray[i], mapping) : sourceArray[i]
+          await uitls.importItemByContentType(targetModel, mappedSource);
         }
       } else {
         await uitls.importSingleType(targetModel, source);

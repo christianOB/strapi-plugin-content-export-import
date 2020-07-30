@@ -11,7 +11,6 @@ import {csvParser} from "../../utils/csvParse";
 import {Table, Select} from '@buffetjs/core';
 import {CustomRow as Row} from '@buffetjs/styles';
 import {convertModelAttributesToOptions} from "../../utils/convertAttributesToOptions";
-import {createObjFromMappingObj} from "../../utils/createObjFromMapping";
 
 const ImportForm = ({models}) => {
   const options = map(models, convertModelToOption);
@@ -66,7 +65,8 @@ const ImportForm = ({models}) => {
       const targetModel = find(models, (model) => model.uid === targetModelUid);
       const _mappingTargetOptions = convertModelAttributesToOptions(targetModel);
       setMappingTargetOptions(_mappingTargetOptions);
-      const fields = Object.keys(source).map((field) => {
+      const sourceObj = (Array.isArray(source)) ? source[0] : source;
+      const fields = Object.keys(sourceObj).map((field) => {
         // default mappings to destination of same name
         _mappingObj[field] = (_mappingTargetOptions.includes(field)) ? field : '';
         return {'sourceField': field}
@@ -128,12 +128,11 @@ const ImportForm = ({models}) => {
       return;
     }
     const model = find(models, (model) => model.uid === targetModelUid);
-    // create object from source
-    const mappedSource = createObjFromMappingObj(source, mappingObj);
     setLoading(true);
     importData({
       targetModel: model.uid,
-      source: mappedSource,
+      source,
+      mapping: mappingObj,
       kind: get(model, 'schema.kind'),
     }).then(() => {
       strapi.notification.success("Import succeeded!");

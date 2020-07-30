@@ -1,4 +1,4 @@
-export const createObjFromMappingObj = (source, mappingObj) => {
+const createObjFromMappingObj = (source, mappingObj) => {
   const destObj = {};
   const mappingKeys = Object.keys(mappingObj)
   if (source && mappingKeys) {
@@ -10,4 +10,8 @@ export const createObjFromMappingObj = (source, mappingObj) => {
       });
   }
   return destObj;
+};
+
+module.exports = {
+  createObjFromMappingObj
 };
