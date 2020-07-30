@@ -8,6 +8,10 @@ import JsonDataDisplay from "../../components/JsonDataDisplay";
 import {importData} from "../../utils/api";
 import yaml from 'js-yaml';
 import {csvParser} from "../../utils/csvParse";
+import {Table, Select} from '@buffetjs/core';
+import {CustomRow as Row} from '@buffetjs/styles';
+import {convertModelAttributesToOptions} from "../../utils/convertAttributesToOptions";
+import {createObjFromMappingObj} from "../../utils/createObjFromMapping";
 
 const ImportForm = ({models}) => {
   const options = map(models, convertModelToOption);
@@ -15,12 +19,62 @@ const ImportForm = ({models}) => {
   const [targetModelUid, setTargetModel] = useState(undefined);
   const [sourceFile, setSourceFile] = useState(null);
   const [source, setSource] = useState(null);
+  const [sourceFields, setSourceFields] = useState([]);
+  const [mappingObj, setMappingObj] = useState({});
+  const [mappingTargetOptions, setMappingTargetOptions] = useState([]);
+  const mappingHeaders = [
+    {
+      name: 'Source Field',
+      value: 'sourceField'
+    },
+    {
+      name: 'Target Field',
+      value: ''
+    }
+  ];
+  const CustomRow = ({ row }) => {
+    const { sourceField } = row;
+    const [val, setVal] = useState(mappingObj[sourceField]);
+    const onRowTargetChange = (event) => {
+      const _val = event.target.value;
+      setVal(_val);
+      // update global mapping when destination changed
+      mappingObj[sourceField] = _val;
+    };
+    return (
+      <Row>
+        <td>
+          <p> {sourceField} </p>
+        </td>
+        <td>
+          <Select name={`select_dest_${sourceField}`} options={mappingTargetOptions} value={val}
+                  onChange={onRowTargetChange}/>
+        </td>
+      </Row>
+    );
+  };
 
   useEffect(() => {
     if (!targetModelUid && models && models.length > 0) {
       setTargetModel(models[0].uid);
     }
   }, [models]);
+  // set potential mappings when source or target model changes
+  useEffect(() => {
+    if (source) {
+      const _mappingObj = {};
+      const targetModel = find(models, (model) => model.uid === targetModelUid);
+      const _mappingTargetOptions = convertModelAttributesToOptions(targetModel);
+      setMappingTargetOptions(_mappingTargetOptions);
+      const fields = Object.keys(source).map((field) => {
+        // default mappings to destination of same name
+        _mappingObj[field] = (_mappingTargetOptions.includes(field)) ? field : '';
+        return {'sourceField': field}
+      });
+      setMappingObj(_mappingObj);
+      setSourceFields(fields);
+    }
+  }, [targetModelUid, source]);
 
   const onTargetModelChange = (event) => {
     setTargetModel(event.target.value);
@@ -74,10 +128,12 @@ const ImportForm = ({models}) => {
       return;
     }
     const model = find(models, (model) => model.uid === targetModelUid);
+    // create object from source
+    const mappedSource = createObjFromMappingObj(source, mappingObj);
     setLoading(true);
     importData({
       targetModel: model.uid,
-      source,
+      source: mappedSource,
       kind: get(model, 'schema.kind'),
     }).then(() => {
       strapi.notification.success("Import succeeded!");
@@ -116,6 +172,10 @@ const ImportForm = ({models}) => {
                    selectOptions={options}
                    value={targetModelUid}
                    onChange={onTargetModelChange}/>
+    </FieldRow>
+    <FieldRow>
+      <label htmlFor="target-mapping">Mappings</label>
+      <Table rows={sourceFields} headers={mappingHeaders} customRow={CustomRow}/>
     </FieldRow>
     <FormAction>
       <Button disabled={loading}
